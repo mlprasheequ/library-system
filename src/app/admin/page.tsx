@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { clearSession, getSession } from "@/lib/session";
 import { validateSession } from "@/lib/session-validation";
+import { Student, Book, LibraryLog } from "@/lib/types";
 import QRCode from "qrcode";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -27,9 +28,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings" | "logs" | "inventory" | "management">("overview");
   const [loading, setLoading] = useState(false);
-  const [students, setStudents] = useState<any[]>([]);
-  const [books, setBooks] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [logs, setLogs] = useState<LibraryLog[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookSearchTerm, setBookSearchTerm] = useState("");
   const [showAddUser, setShowAddUser] = useState(false);
@@ -38,14 +39,14 @@ export default function AdminDashboard() {
   const [showAddBook, setShowAddBook] = useState(false);
   const [bulkJson, setBulkJson] = useState("");
   const [showEditUser, setShowEditUser] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<Student | null>(null);
   const [showReport, setShowReport] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [selectedStudentLogs, setSelectedStudentLogs] = useState<any[]>([]);
+  const [selectedStudentLogs, setSelectedStudentLogs] = useState<LibraryLog[]>([]);
   const [showEditBook, setShowEditBook] = useState(false);
-  const [selectedBookForEdit, setSelectedBookForEdit] = useState<any>(null);
+  const [selectedBookForEdit, setSelectedBookForEdit] = useState<Book | null>(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
-  const [selectedBookDetails, setSelectedBookDetails] = useState<any>(null);
+  const [selectedBookDetails, setSelectedBookDetails] = useState<Book | null>(null);
   
   const [categories, setCategories] = useState<string[]>([
     'General', 'Reference', 'الْكُتُب'
@@ -212,7 +213,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleViewReport = (user: any) => {
+  const handleViewReport = (user: Student) => {
     const userLogs = logs.filter((log) => log.student_id === user.id || log.students?.id === user.id);
     setSelectedUser(user);
     setSelectedStudentLogs(userLogs);
@@ -221,6 +222,7 @@ export default function AdminDashboard() {
 
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedUser) return;
     setLoading(true);
     try {
       const updates: any = {

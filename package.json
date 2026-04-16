@@ -13,6 +13,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
     "clsx": "^2.1.1",
+    "dynamsoft-javascript-barcode": "^9.6.42",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.38.0",
     "jsqr": "^1.4.0",
@@ -23,6 +24,7 @@
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-vision-camera": "^1.0.1",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

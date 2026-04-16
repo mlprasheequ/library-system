@@ -3,6 +3,12 @@ export interface Student {
   full_name: string;
   email_library: string; // name@library.com
   grade?: string;
+  roll_id: string;
+  username: string;
+  parent_phone?: string;
+  is_responsible: boolean;
+  is_admin: boolean;
+  password?: string;
   created_at: string;
 }
 
@@ -24,6 +30,10 @@ export interface Book {
   book_id: string;
   status: 'available' | 'borrowed' | 'lost';
   current_borrower_id?: string;
+  current_borrow?: {
+    borrow_date: string;
+    students?: Student;
+  };
   created_at?: string;
 }
 
@@ -36,6 +46,8 @@ export interface LibraryLog {
   due_date?: string;
   student_name: string;
   book_title: string;
+  students?: Student;
+  books?: Book;
 }
 
 export type UserRole = 'admin' | 'student' | 'responsible';
