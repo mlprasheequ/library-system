@@ -498,11 +498,11 @@ export default function ResponsibleDashboard() {
         </aside>
 
         {/* Main Interface */}
-        <main className="flex-1 overflow-y-auto px-10 pt-10 pb-20 bg-[#020617] relative custom-scroll">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-10 pt-10 pb-20 bg-[#020617] relative custom-scroll">
           <div className="max-w-6xl mx-auto">
             <header className="flex justify-between items-end mb-12">
               <div>
-                <h1 className="text-4xl font-black tracking-tighter uppercase italic leading-none mb-3">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none mb-3">
                   {activeTab === 'desk' ? 'Digital Ledger' : 
                    activeTab === 'management' ? 'Registry Hub' :
                    activeTab === 'inventory' ? 'Inventory' :

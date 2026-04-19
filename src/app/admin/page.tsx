@@ -64,6 +64,26 @@ export default function AdminDashboard() {
   const [globalSettings, setGlobalSettings] = useState<any>({ due_days: 14, max_books: 3, categories: [] });
   const [adminProfile, setAdminProfile] = useState({ username: "", password: "" });
 
+  const normalizeCategories = (rawCategories: any[]) => {
+    const loadedCategories = (rawCategories || [])
+      .map((cat: any) => {
+        if (typeof cat === 'string') return cat.trim();
+        if (cat && typeof cat.name === 'string') return cat.name.trim();
+        return "";
+      })
+      .filter(Boolean);
+
+    const uniqueCategories = [...new Set(loadedCategories)];
+    if (uniqueCategories.length === 0) return ['General', 'Reference', 'الْكُتُب'];
+    return uniqueCategories;
+  };
+
+  const getBookDisplayPrice = (book: any) => {
+    const rawPrice = book?.price ?? book?.valuation ?? book?.rate;
+    if (rawPrice === undefined || rawPrice === null || rawPrice === "") return null;
+    return rawPrice;
+  };
+
   useEffect(() => {
     const validateAndFetch = async () => {
       const isValid = await validateSession();
@@ -111,13 +131,7 @@ export default function AdminDashboard() {
       if (settings) {
         setGlobalSettings(settings);
         if (settings.categories && settings.categories.length > 0) {
-          // Handle both old format (array of objects) and new format (array of strings)
-          const loadedCategories = settings.categories.map((cat: any) => 
-            typeof cat === 'string' ? cat : cat.name
-          );
-          // Remove duplicates and ensure we have at least the default categories
-          const uniqueCategories = [...new Set([...loadedCategories, 'General', 'Reference', 'الْكُتُب'])];
-          setCategories(uniqueCategories);
+          setCategories(normalizeCategories(settings.categories));
         }
       }
     } catch (err) {
@@ -579,7 +593,7 @@ export default function AdminDashboard() {
         <div className="max-w-6xl mx-auto">
           <header className="flex justify-between items-end mb-12">
             <div>
-              <h1 className="text-4xl font-black tracking-tighter uppercase italic leading-none mb-3">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none mb-3">
                 {activeTab === 'overview' ? 'DASHBOARD' : 
                  activeTab === 'management' ? 'REGISTRY_HUB' : 
                  activeTab === 'inventory' ? 'INVENTORY' : 
@@ -601,9 +615,28 @@ export default function AdminDashboard() {
 
           <AnimatePresence mode="wait">
             {activeTab === 'overview' && (
-              <motion.div key="overview" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} className="space-y-10">
-                 {/* Bento Stats Grid */}
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <motion.div key="overview" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} className="space-y-6 md:space-y-10">
+                 {/* Quick System Actions - Mobile Priority */}
+                 <div className="md:hidden bg-gradient-to-br from-indigo-600/10 to-blue-600/10 border border-white/5 p-6 rounded-3xl backdrop-blur-3xl space-y-6">
+                   <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-white flex items-center italic"><Zap className="w-4 h-4 mr-3" />Rapid Access</h3>
+                   <div className="grid grid-cols-1 gap-4">
+                     <button onClick={() => setShowAddUser(true)} className="flex items-center justify-between p-5 bg-white/5 rounded-xl border border-white/5 hover:bg-indigo-600 hover:border-indigo-500 transition-all group">
+                        <span className="font-black text-sm uppercase tracking-widest">Enroll Personnel</span>
+                        <UserPlus className="w-5 h-5 text-gray-600 group-hover:text-white" />
+                     </button>
+                     <button onClick={() => setShowAddBook(true)} className="flex items-center justify-between p-5 bg-white/5 rounded-xl border border-white/5 hover:bg-emerald-600 hover:border-emerald-500 transition-all group">
+                        <span className="font-black text-sm uppercase tracking-widest">Archive New Unit</span>
+                        <Package className="w-5 h-5 text-gray-600 group-hover:text-white" />
+                     </button>
+                     <button onClick={() => setActiveTab('settings')} className="flex items-center justify-between p-5 bg-white/5 rounded-xl border border-white/5 hover:bg-amber-600 hover:border-amber-500 transition-all group">
+                        <span className="font-black text-sm uppercase tracking-widest">Adjust Policies</span>
+                        <Settings className="w-5 h-5 text-gray-600 group-hover:text-white" />
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Bento Stats Grid - Desktop Only */}
+                 <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     {[
                       { label: 'Personnel', value: students.length, color: 'purple', icon: Users, desc: 'Identity Records' },
                       { label: 'Units', value: books.length, color: 'emerald', icon: BookOpen, desc: 'Master Catalog' },
@@ -622,8 +655,8 @@ export default function AdminDashboard() {
                     ))}
                  </div>
 
-                 {/* Master Catalog Preview */}
-                 <div className="bg-white/5 border border-white/5 p-8 rounded-3xl backdrop-blur-3xl space-y-6">
+                 {/* Master Catalog Preview - Compact on Mobile */}
+                 <div className="bg-white/5 border border-white/5 p-4 md:p-8 rounded-3xl backdrop-blur-3xl space-y-4 md:space-y-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 flex items-center italic"><Package className="w-3.5 h-3.5 mr-3" />Master Catalog</h3>
                        <div className="relative flex-1 w-full max-w-xs">
@@ -635,22 +668,25 @@ export default function AdminDashboard() {
                            placeholder="Search catalog..." 
                          />
                        </div>
-                       <div className="flex items-center space-x-3">
-                          <button onClick={() => setShowBulkAdd(true)} className="px-6 py-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-xl font-black uppercase text-[8px] tracking-widest flex items-center space-x-2 transition-all border border-indigo-500/20">
+                       <div className="flex items-center space-x-2 md:space-x-3">
+                          <button onClick={() => setShowBulkAdd(true)} className="px-4 py-2 md:px-6 md:py-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-xl font-black uppercase text-[7px] md:text-[8px] tracking-widest flex items-center space-x-1 md:space-x-2 transition-all border border-indigo-500/20">
                              <Code className="w-3 h-3" />
-                             <span>Bulk Import (JSON)</span>
+                             <span className="hidden sm:inline">Bulk Import (JSON)</span>
+                             <span className="sm:hidden">Bulk</span>
                           </button>
-                          <button onClick={downloadAllQRs} className="px-6 py-2 bg-amber-600/20 text-amber-400 hover:bg-amber-600 hover:text-white rounded-xl font-black uppercase text-[8px] tracking-widest flex items-center space-x-2 transition-all border border-amber-500/20">
+                          <button onClick={downloadAllQRs} className="px-4 py-2 md:px-6 md:py-2 bg-amber-600/20 text-amber-400 hover:bg-amber-600 hover:text-white rounded-xl font-black uppercase text-[7px] md:text-[8px] tracking-widest flex items-center space-x-1 md:space-x-2 transition-all border border-amber-500/20">
                              <Download className="w-3 h-3" />
-                             <span>Export QR Pack</span>
+                             <span className="hidden sm:inline">Export QR Pack</span>
+                             <span className="sm:hidden">QR</span>
                           </button>
-                          <button onClick={() => setShowAddBook(true)} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-black uppercase text-[8px] tracking-widest flex items-center space-x-2 transition-all">
+                          <button onClick={() => setShowAddBook(true)} className="px-4 py-2 md:px-6 md:py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-black uppercase text-[7px] md:text-[8px] tracking-widest flex items-center space-x-1 md:space-x-2 transition-all">
                              <Plus className="w-3 h-3" />
-                             <span>Add New Unit</span>
+                             <span className="hidden sm:inline">Add New Unit</span>
+                             <span className="sm:hidden">Add</span>
                           </button>
                        </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                        {books.filter(b => {
                          if (!bookSearchTerm) return true;
                          const term = bookSearchTerm.toLowerCase();
@@ -666,24 +702,24 @@ export default function AdminDashboard() {
                            b.description?.toLowerCase().includes(term) ||
                            b.language?.toLowerCase().includes(term)
                          );
-                       }).slice(0, 6).map((book) => (
-                          <div key={book.id} className="p-4 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
-                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 relative">
-                                   <BookOpen className="w-4 h-4" />
+                       }).slice(0, 3).map((book) => (  // Reduced from 6 to 3 on mobile
+                          <div key={book.id} className="p-3 md:p-4 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
+                             <div className="flex items-center space-x-2 md:space-x-3">
+                                <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400">
+                                   <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
                                 </div>
                                 <div>
-                                   <p className="font-black text-xs text-white italic truncate max-w-[150px]">"{book.title}"</p>
-                                   <p className="text-[7px] font-black text-gray-600 uppercase">{book.book_id}</p>
-                                   <p className="text-[7px] font-black text-emerald-400 uppercase">{book.price ? `$${book.price}` : 'N/A'}</p>
+                                   <p className="font-black text-xs text-white italic truncate max-w-[120px] md:max-w-[150px]">"{book.title}"</p>
+                                   <p className="text-[6px] md:text-[7px] font-black text-gray-600 uppercase">{book.book_id}</p>
+                                   <p className="text-[6px] md:text-[7px] font-black text-emerald-400 uppercase">{book.price ? `$${book.price}` : 'N/A'}</p>
                                 </div>
                              </div>
-                             <div className="flex items-center space-x-2">
-                               <button onClick={() => handleViewBookDetails(book)} className="p-2 text-gray-700 hover:text-indigo-500 transition-colors">
-                                  <Info className="w-3.5 h-3.5" />
+                             <div className="flex items-center space-x-1 md:space-x-2">
+                               <button onClick={() => handleViewBookDetails(book)} className="p-1 md:p-2 text-gray-700 hover:text-indigo-500 transition-colors">
+                                  <Info className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                </button>
-                               <button onClick={() => { if(confirm('Erase this unit?')) supabase.from('books').delete().eq('id', book.id).then(fetchData); }} className="p-2 text-gray-700 hover:text-rose-500 transition-colors">
-                                  <Trash2 className="w-3.5 h-3.5" />
+                               <button onClick={() => { if(confirm('Erase this unit?')) supabase.from('books').delete().eq('id', book.id).then(fetchData); }} className="p-1 md:p-2 text-gray-700 hover:text-rose-500 transition-colors">
+                                  <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                </button>
                              </div>
                           </div>
@@ -703,11 +739,12 @@ export default function AdminDashboard() {
                            b.description?.toLowerCase().includes(term) ||
                            b.language?.toLowerCase().includes(term)
                          );
-                       }).length === 0 && <p className="text-[8px] text-gray-600 italic uppercase col-span-3 text-center py-10">No Archive Units Match Search</p>}
+                       }).length === 0 && <p className="text-[8px] text-gray-600 italic uppercase col-span-3 text-center py-6 md:py-10">No Archive Units Match Search</p>}
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                 {/* Desktop Layout: Top Readers and Quick Actions */}
+                 <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Top Readers Leaderboard */}
                     <div className="lg:col-span-2 bg-white/5 border border-white/5 p-8 rounded-3xl backdrop-blur-3xl space-y-6">
                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 flex items-center italic"><Star className="w-3.5 h-3.5 mr-3" />Authority Leaderboard</h3>
