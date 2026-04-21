@@ -1002,7 +1002,7 @@ export default function AdminDashboard() {
                                </div>
                                <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 flex flex-col justify-center">
                                   <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1 italic">Valuation</span>
-                                  <span className="text-[11px] font-black text-white italic">₹{book.rate}</span>
+                                  <span className="text-[11px] font-black text-white italic">₹{getBookDisplayPrice(book) || "N/A"}</span>
                                </div>
                             </div>
 
