@@ -171,16 +171,18 @@ export default function ResponsibleDashboard() {
         const { error } = await supabase.from('library_logs').insert([{
             student_id: selectedStudent.id,
             book_id: selectedBook.id,
+            student_name: selectedStudent.full_name,
+            book_title: selectedBook.title,
             borrow_date: new Date().toISOString(),
             due_date: dueDate,
-            issued_by: 'Librarian',
-            condition_notes: conditionNotes
+            issued_by: 'Librarian'
         }]);
 
         if (error) throw error;
 
         // Update book status
-        await supabase.from('books').update({ status: 'borrowed' }).eq('id', selectedBook.id);
+        const { error: updateError } = await supabase.from('books').update({ status: 'borrowed' }).eq('id', selectedBook.id);
+        if (updateError) throw updateError;
 
         setSelectedStudent(null);
         setSelectedBook(null);
@@ -191,26 +193,33 @@ export default function ResponsibleDashboard() {
         fetchData();
         alert("✅ Transaction Authorized successfully!");
     } catch (err: any) { 
-      console.error(err);
-      alert("❌ Transaction Failed.");
+      console.error("Checkout Error Details:", {
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code,
+        fullError: err
+      });
+      alert("❌ Transaction Failed: " + (err?.message || "Unknown error"));
     }
     finally { setLoading(false); }
   };
 
   const handleReturn = async (logId: string, bookId: string) => {
-    const notes = prompt("Enter condition notes (optional):", "Returned in good condition");
     setLoading(true);
     try {
         await supabase.from('library_logs').update({ 
-          return_date: new Date().toISOString(),
-          condition_notes: notes 
+          return_date: new Date().toISOString()
         }).eq('id', logId);
         
         await supabase.from('books').update({ status: 'available' }).eq('id', bookId);
         
         fetchData();
         alert("✅ Book returned and marked as Available.");
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err); 
+      alert("❌ Return failed: " + (err as any)?.message);
+    }
     finally { setLoading(false); }
   };
 

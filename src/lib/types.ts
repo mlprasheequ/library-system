@@ -12,6 +12,16 @@ export interface Student {
   created_at: string;
 }
 
+export interface BookField {
+  id: string;
+  name: string;
+  key: string;
+  type: 'text' | 'number' | 'select' | 'textarea';
+  required: boolean;
+  options?: string[];
+  order: number;
+}
+
 export interface Book {
   id: string;
   title: string;
@@ -30,6 +40,7 @@ export interface Book {
   book_id: string;
   status: 'available' | 'borrowed' | 'lost';
   current_borrower_id?: string;
+  custom_fields?: Record<string, any>;
   current_borrow?: {
     borrow_date: string;
     students?: Student;

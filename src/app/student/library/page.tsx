@@ -328,19 +328,19 @@ export default function StudentLibraryDashboard() {
                   <motion.div 
                     layoutId={book.id}
                     key={book.id} 
-                    className="group relative bg-[#0f172a]/40 border border-white/5 rounded-[2rem] overflow-hidden hover:border-indigo-500/30 transition-all duration-500 flex flex-col h-[420px]"
+                    className="group relative bg-[#0f172a]/40 border border-white/5 rounded-[2rem] overflow-hidden hover:border-indigo-500/30 transition-all duration-500 flex flex-col h-[480px]"
                   >
                     {/* Visual Background Element */}
                     <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-indigo-500/10 transition-colors" />
                     
                     {/* Cover Section */}
-                    <div className="relative h-52 w-full overflow-hidden p-4">
+                    <div className="relative h-72 w-full overflow-hidden p-4">
                        <div className="w-full h-full rounded-2xl overflow-hidden bg-black/40 border border-white/5 relative flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-700 shadow-xl">
                           {book.cover_image_url ? (
                             <img src={book.cover_image_url} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="flex flex-col items-center space-y-3 opacity-20">
-                               <BookOpen className="w-10 h-10 text-gray-400" />
+                               <BookOpen className="w-16 h-16 text-gray-400" />
                                <span className="text-[7px] font-black uppercase tracking-widest">No Visual</span>
                             </div>
                           )}
@@ -361,14 +361,14 @@ export default function StudentLibraryDashboard() {
                           <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest italic">{book.author || "Anonymous Authority"}</p>
                        </div>
 
-                       <div className="grid grid-cols-2 gap-3 mb-6">
-                          <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 flex flex-col justify-center">
-                             <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1 italic">Archive ID</span>
-                             <span className="text-[9px] font-black text-gray-400 uppercase truncate">{book.book_id}</span>
+                       <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                             <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Archive ID</span>
+                             <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.book_id}</span>
                           </div>
-                          <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 flex flex-col justify-center">
-                             <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1 italic">Valuation</span>
-                             <span className="text-[11px] font-black text-white italic truncate">₹{book.rate}</span>
+                          <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                             <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Price</span>
+                             <span className="text-[9px] font-black text-white italic">₹{book.price || 'N/A'}</span>
                           </div>
                        </div>
 
@@ -499,7 +499,7 @@ export default function StudentLibraryDashboard() {
                       <button onClick={() => setSelectedBook(null)} className="p-2.5 hover:bg-white/5 rounded-xl transition-all"><X className="w-5 h-5 text-gray-500" /></button>
                    </div>
                    
-                   <div className="grid grid-cols-2 gap-4">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                          <p className="text-[7px] font-black uppercase text-gray-500 mb-1 italic">Category</p>
                          <p className="text-[10px] font-bold text-white uppercase tracking-widest">{selectedBook.category || "General Archive"}</p>
@@ -508,6 +508,30 @@ export default function StudentLibraryDashboard() {
                          <p className="text-[7px] font-black uppercase text-gray-500 mb-1 italic">Status</p>
                          <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedBook.status === 'available' ? 'text-emerald-500' : 'text-rose-500'}`}>{selectedBook.status}</p>
                       </div>
+                      {selectedBook.subcategory && (
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                           <p className="text-[7px] font-black uppercase text-gray-500 mb-1 italic">Sub Category</p>
+                           <p className="text-[10px] font-bold text-white uppercase tracking-widest">{selectedBook.subcategory}</p>
+                        </div>
+                      )}
+                      {selectedBook.pages && (
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                           <p className="text-[7px] font-black uppercase text-gray-500 mb-1 italic">Pages</p>
+                           <p className="text-[10px] font-bold text-white uppercase tracking-widest">{selectedBook.pages}</p>
+                        </div>
+                      )}
+                      {selectedBook.how_much_value && (
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                           <p className="text-[7px] font-black uppercase text-gray-500 mb-1 italic">How Much Value</p>
+                           <p className="text-[10px] font-bold text-white uppercase tracking-widest">{selectedBook.how_much_value}</p>
+                        </div>
+                      )}
+                      {selectedBook.which_value && (
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                           <p className="text-[7px] font-black uppercase text-gray-500 mb-1 italic">Which Value</p>
+                           <p className="text-[10px] font-bold text-white uppercase tracking-widest">{selectedBook.which_value}</p>
+                        </div>
+                      )}
                    </div>
 
                    <div className="space-y-3">
@@ -515,13 +539,17 @@ export default function StudentLibraryDashboard() {
                       <p className="text-xs text-gray-400 leading-relaxed font-medium line-clamp-4">{selectedBook.description || "No abstract data available for this archive unit."}</p>
                    </div>
 
-                   <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                   <div className="pt-6 border-t border-white/5 flex flex-wrap items-center gap-4 justify-between">
                       <div className="flex items-center space-x-6 text-gray-500">
+                         <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Archive ID</span><span className="text-[9px] font-bold text-white">{selectedBook.book_id || 'N/A'}</span></div>
                          <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Publisher</span><span className="text-[9px] font-bold text-white">{selectedBook.publisher || 'N/A'}</span></div>
                          <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Language</span><span className="text-[9px] font-bold text-white">{selectedBook.language || 'English'}</span></div>
                          <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">ISBN</span><span className="text-[9px] font-bold text-white">{selectedBook.isbn || 'N/A'}</span></div>
+                         {selectedBook.shelf_location && (
+                           <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Location</span><span className="text-[9px] font-bold text-white">{selectedBook.shelf_location}</span></div>
+                         )}
                       </div>
-                      <span className="text-2xl font-black italic tracking-tighter">₹{selectedBook.rate}</span>
+                      <span className="text-2xl font-black italic tracking-tighter">₹{selectedBook.price || selectedBook.rate || 'N/A'}</span>
                    </div>
                 </div>
               </motion.div>

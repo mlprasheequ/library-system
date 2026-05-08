@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { clearSession, getSession } from "@/lib/session";
 import { validateSession } from "@/lib/session-validation";
-import { Student, Book, LibraryLog } from "@/lib/types";
+import { Student, Book, LibraryLog, BookField } from "@/lib/types";
 import QRCode from "qrcode";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -45,8 +45,9 @@ export default function AdminDashboard() {
   const [selectedStudentLogs, setSelectedStudentLogs] = useState<LibraryLog[]>([]);
   const [showEditBook, setShowEditBook] = useState(false);
   const [selectedBookForEdit, setSelectedBookForEdit] = useState<Book | null>(null);
+  const [showEditField, setShowEditField] = useState(false);
   const [showBookDetails, setShowBookDetails] = useState(false);
-  const [selectedBookDetails, setSelectedBookDetails] = useState<Book | null>(null);
+  const [selectedBookDetails, setSelectedBookDetails] = useState<any>(null);
   
   const [categories, setCategories] = useState<string[]>([
     'General', 'Reference', 'الْكُتُب'
@@ -55,13 +56,31 @@ export default function AdminDashboard() {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
 
+  const [bookFields, setBookFields] = useState<BookField[]>([
+    { id: '1', name: 'Archive Nomenclature', key: 'archive_nomenclature', type: 'text', required: true, order: 1 },
+    { id: '2', name: 'Book Name', key: 'title', type: 'text', required: true, order: 2 },
+    { id: '3', name: 'Primary Authority (Author)', key: 'author', type: 'text', required: true, order: 3 },
+    { id: '4', name: 'Price (₹)', key: 'price', type: 'number', required: true, order: 4 },
+    { id: '5', name: 'Category', key: 'category', type: 'select', required: true, options: categories, order: 5 },
+    { id: '6', name: 'Page Count', key: 'pages', type: 'number', required: true, order: 6 },
+    { id: '7', name: 'Sub Category', key: 'subcategory', type: 'text', required: false, order: 7 },
+    { id: '8', name: 'How Much Value', key: 'how_much_value', type: 'number', required: false, order: 8 },
+    { id: '9', name: 'Which Value', key: 'which_value', type: 'text', required: false, order: 9 },
+    { id: '10', name: 'Archive ID / Serial', key: 'book_id', type: 'text', required: false, order: 10 },
+    { id: '11', name: 'Publisher', key: 'publisher', type: 'text', required: false, order: 11 },
+    { id: '12', name: 'Language', key: 'language', type: 'text', required: false, order: 12 },
+    { id: '13', name: 'ISBN', key: 'isbn', type: 'text', required: false, order: 13 },
+    { id: '14', name: 'Description (Abstract)', key: 'description', type: 'textarea', required: false, order: 14 },
+    { id: '15', name: 'Shelf Position', key: 'shelf', type: 'text', required: false, order: 15 },
+    { id: '16', name: 'Row Position', key: 'row', type: 'text', required: false, order: 16 },
+    { id: '17', name: 'Cover Page URL', key: 'cover_image_url', type: 'text', required: false, order: 17 },
+  ]);
+  const [newField, setNewField] = useState<BookField>({ id: '', name: '', key: '', type: 'text', required: false, order: 0 });
+  const [editingField, setEditingField] = useState<BookField | null>(null);
+
   const [newUser, setNewUser] = useState({ name: "", roll: "", class: "", phone: "", username: "", password: "", is_responsible: false, is_admin: false });
-  const [newBookData, setNewBookData] = useState({ 
-    title: "", book_id: "", author: "", publisher: "", category: "", subcategory: "", rate: "", 
-    shelf: "", row: "", language: "English", price: "", cover_image_url: "", 
-    isbn: "", pages: "", description: "" 
-  });
-  const [globalSettings, setGlobalSettings] = useState<any>({ due_days: 14, max_books: 3, categories: [] });
+  const [newBookData, setNewBookData] = useState<Record<string, any>>({});
+  const [globalSettings, setGlobalSettings] = useState<any>({ due_days: 14, max_books: 3, categories: [], book_fields: [] });
   const [adminProfile, setAdminProfile] = useState({ username: "", password: "" });
 
   const normalizeCategories = (rawCategories: any[]) => {
@@ -132,6 +151,30 @@ export default function AdminDashboard() {
         setGlobalSettings(settings);
         if (settings.categories && settings.categories.length > 0) {
           setCategories(normalizeCategories(settings.categories));
+        }
+        if (settings.book_fields && settings.book_fields.length > 0) {
+          setBookFields(settings.book_fields);
+        } else {
+          // Set default fields if none
+          setBookFields([
+            { id: '1', name: 'Archive Nomenclature', key: 'archive_nomenclature', type: 'text', required: true, order: 1 },
+            { id: '2', name: 'Book Name', key: 'title', type: 'text', required: true, order: 2 },
+            { id: '3', name: 'Primary Authority (Author)', key: 'author', type: 'text', required: true, order: 3 },
+            { id: '4', name: 'Price (₹)', key: 'price', type: 'number', required: true, order: 4 },
+            { id: '5', name: 'Category', key: 'category', type: 'select', required: true, options: categories, order: 5 },
+            { id: '6', name: 'Page Count', key: 'pages', type: 'number', required: true, order: 6 },
+            { id: '7', name: 'Sub Category', key: 'subcategory', type: 'text', required: false, order: 7 },
+            { id: '8', name: 'How Much Value', key: 'how_much_value', type: 'number', required: false, order: 8 },
+            { id: '9', name: 'Which Value', key: 'which_value', type: 'text', required: false, order: 9 },
+            { id: '10', name: 'Archive ID / Serial', key: 'book_id', type: 'text', required: false, order: 10 },
+            { id: '11', name: 'Publisher', key: 'publisher', type: 'text', required: false, order: 11 },
+            { id: '12', name: 'Language', key: 'language', type: 'text', required: false, order: 12 },
+            { id: '13', name: 'ISBN', key: 'isbn', type: 'text', required: false, order: 13 },
+            { id: '14', name: 'Description (Abstract)', key: 'description', type: 'textarea', required: false, order: 14 },
+            { id: '15', name: 'Shelf Position', key: 'shelf', type: 'text', required: false, order: 15 },
+            { id: '16', name: 'Row Position', key: 'row', type: 'text', required: false, order: 16 },
+            { id: '17', name: 'Cover Page URL', key: 'cover_image_url', type: 'text', required: false, order: 17 },
+          ]);
         }
       }
     } catch (err) {
@@ -305,35 +348,53 @@ export default function AdminDashboard() {
         color: { dark: '#000000', light: '#ffffff' }
       });
 
-      const { error } = await supabase.from('books').upsert([{
+      // Build the book object with standard fields and custom fields
+      const bookData: any = {
         book_id,
-        title: newBookData.title,
-        author: newBookData.author,
-        rate: 0,
-        publisher: newBookData.publisher,
-        category: newBookData.category,
-        subcategory: "",
-        language: newBookData.language,
-        shelf_location: `${newBookData.shelf}${newBookData.row ? `, ${newBookData.row}` : ''}`,
-        cover_image_url: newBookData.cover_image_url,
-        price: parseFloat(newBookData.price || "0"),
-        isbn: newBookData.isbn || "",
-        pages: 0,
-        description: newBookData.description || "",
         status: 'available'
-      }], { onConflict: 'book_id' });
+      };
+
+      // Map fields to book data
+      bookFields.forEach(field => {
+        if (field.key in newBookData) {
+          if (field.key === 'price') {
+            bookData[field.key] = parseFloat(newBookData[field.key] || "0");
+          } else if (field.key === 'shelf' || field.key === 'row') {
+            // Handle shelf and row specially for shelf_location
+            if (field.key === 'shelf') {
+              bookData.shelf_location = `${newBookData.shelf || ''}${newBookData.row ? `, ${newBookData.row}` : ''}`;
+            }
+          } else if (field.key === 'category') {
+            bookData[field.key] = newBookData[field.key];
+          } else {
+            bookData[field.key] = newBookData[field.key];
+          }
+        }
+      });
+      
+      // Also store how_much_value and which_value in description for reference
+      let additionalInfo = [];
+      if (newBookData.how_much_value) {
+        additionalInfo.push(`How Much Value: ${newBookData.how_much_value}`);
+      }
+      if (newBookData.which_value) {
+        additionalInfo.push(`Which Value: ${newBookData.which_value}`);
+      }
+      if (additionalInfo.length > 0) {
+        bookData.description = (bookData.description || '') + (bookData.description ? '\n\n' : '') + additionalInfo.join('\n');
+      }
+
+      // We're not using custom_fields since the table doesn't have that column
+
+      const { error } = await supabase.from('books').upsert([bookData], { onConflict: 'book_id' });
 
       if (error) throw error;
 
       // Update global categories in settings if changed
-      await supabase.from('library_settings').upsert({ id: 'global', ...globalSettings, categories });
+      await supabase.from('library_settings').upsert({ id: 'global', ...globalSettings, categories, book_fields: bookFields });
 
       setShowAddBook(false);
-      setNewBookData({ 
-        title: "", book_id: "", author: "", publisher: "", category: "", subcategory: "", rate: "", 
-        shelf: "", row: "", language: "English", price: "", cover_image_url: "", 
-        isbn: "", pages: "", description: "" 
-      });
+      setNewBookData({});
       fetchData();
       alert("✅ Archive unit registered successfully with QR code.");
     } catch (err) {
@@ -359,6 +420,7 @@ export default function AdminDashboard() {
         shelf_location: selectedBookForEdit.shelf_location,
         cover_image_url: selectedBookForEdit.cover_image_url,
         price: parseFloat(selectedBookForEdit.price || "0"),
+        pages: selectedBookForEdit.pages ? parseInt(selectedBookForEdit.pages) : null,
         isbn: selectedBookForEdit.isbn || "",
         description: selectedBookForEdit.description || ""
       }).eq('id', selectedBookForEdit.id);
@@ -419,13 +481,15 @@ export default function AdminDashboard() {
         category: bookData.category || "",
         subcategory: bookData.sub_category || bookData.subcategory || "",
         rate: bookData.price || bookData.valuation || "",
-        shelf: bookData.shelf_position?.split(',')[0]?.trim() || bookData.shelf_location?.split(',')[0]?.trim() || "",
-        row: bookData.shelf_position?.split(',')[1]?.trim() || bookData.shelf_location?.split(',')[1]?.trim() || "",
+        shelf: bookData.shelf_position?.split(',')[0]?.trim() || bookData.shelf_location?.split(',')[0]?.trim() || bookData['shelf position'] || "",
+        row: bookData.shelf_position?.split(',')[1]?.trim() || bookData.shelf_location?.split(',')[1]?.trim() || bookData['row position'] || "",
         language: bookData.language || "English",
         price: bookData.price || bookData.valuation || "",
-        cover_image_url: bookData.book_url || bookData.cover_image_url || "",
+        cover_image_url: bookData['cover page_url'] || bookData.book_url || bookData.cover_image_url || "",
+        pages: bookData.page_count || bookData.pages || "",
+        how_much_value: bookData.how_much_value || bookData['How Much Value'] || "",
+        which_value: bookData.which_value || bookData['Which Value'] || "",
         isbn: bookData.isbn || "",
-        pages: bookData.pages || "",
         description: bookData.description || ""
       });
       setShowScanner(false);
@@ -457,21 +521,52 @@ export default function AdminDashboard() {
           categoriesChanged = true;
         }
 
-        return {
+        const processedBook: any = {
           book_id,
-          title: b.title || b.book_nomenclature || "Untitled Unit",
-          author: b.author || b.authority || "Unknown Authority",
-          publisher: b.publisher || "",
-          category: categoryName,
-          subcategory: "",
-          price: parseFloat(b.price || b.valuation || "0"),
-          language: b.language || "English",
-          shelf_location: b.shelf_location || b.location || b.shelf_position || "",
-          cover_image_url: b.cover_image_url || b.book_url || b.image_url || "",
-          isbn: b.isbn || "",
-          description: b.description || b.desc || "",
           status: 'available'
         };
+
+        // Map standard fields manually for better control
+        processedBook.title = b.book_nomenclature || b.title || '';
+        processedBook.author = b.authority || b.author || '';
+        processedBook.price = b.price ? parseFloat(b.price) : 0;
+        processedBook.category = b.category || 'General';
+        processedBook.pages = b.page_count ? parseInt(b.page_count) : (b.pages ? parseInt(b.pages) : 0);
+        processedBook.subcategory = b.sub_category || b.subcategory || '';
+        processedBook.publisher = b.publisher || '';
+        processedBook.language = b.language || '';
+        processedBook.shelf = b.shelf_position || b.shelf || '';
+        processedBook.row = b['row position'] || b.row || '';
+        processedBook.isbn = b.isbn || '';
+        processedBook.description = b.description || '';
+        processedBook.cover_image_url = b['cover page_url'] || b.book_url || b.cover_image_url || '';
+        
+        // Set how_much_value and which_value as top-level fields
+        processedBook.how_much_value = b.how_much_value || b['How Much Value'] || '';
+        processedBook.which_value = b.which_value || b['Which Value'] || '';
+        
+        // Also store them in description as additional info for reference
+        let additionalInfo = [];
+        if (b.how_much_value || b['How Much Value']) {
+          additionalInfo.push(`How Much Value: ${b.how_much_value || b['How Much Value']}`);
+        }
+        if (b.which_value || b['Which Value']) {
+          additionalInfo.push(`Which Value: ${b.which_value || b['Which Value']}`);
+        }
+        if (additionalInfo.length > 0) {
+          processedBook.description = (processedBook.description || '') + (processedBook.description ? '\n\n' : '') + additionalInfo.join('\n');
+        }
+
+        // Handle shelf_location
+        const shelf = processedBook.shelf;
+        const row = processedBook.row;
+        if (shelf || row) {
+          processedBook.shelf_location = `${shelf || ''}${row ? `, ${row}` : ''}`;
+        }
+
+        // We're not using custom_fields since the table doesn't have that column
+
+        return processedBook;
       }));
 
       const { error } = await supabase.from('books').upsert(processedBooks, { onConflict: 'book_id' });
@@ -499,25 +594,49 @@ export default function AdminDashboard() {
     
     setLoading(true);
     try {
-      const { data: books } = await supabase.from('books').select('title, book_id');
-      if (!books) return;
+      const { data: books } = await supabase.from('books').select('*');
+      if (!books || books.length === 0) {
+        alert("❌ No books found to generate QR codes for.");
+        return;
+      }
 
       for (const book of books) {
-        const qrData = JSON.stringify({ id: book.book_id, title: book.title });
+        const qrData = JSON.stringify({
+          id: book.book_id,
+          book_id: book.book_id,
+          title: book.title,
+          author: book.author,
+          publisher: book.publisher,
+          category: book.category,
+          subcategory: book.subcategory,
+          price: book.price,
+          pages: book.pages,
+          isbn: book.isbn,
+          description: book.description,
+          language: book.language,
+          shelf: book.shelf,
+          row: book.row,
+          shelf_position: book.shelf_location,
+          'cover page_url': book.cover_image_url,
+          how_much_value: book.how_much_value,
+          which_value: book.which_value
+        });
         const qrCodeUrl = await QRCode.toDataURL(qrData, {
           width: 400,
           margin: 2,
           color: { dark: '#000000', light: '#ffffff' }
         });
         const base64Data = qrCodeUrl.split(',')[1];
-        folder?.file(`${book.title.replace(/[/\\?%*:|"<>]/g, '-')}_${book.book_id}.png`, base64Data, { base64: true });
+        const safeTitle = book.title ? book.title.replace(/[/\\?%*:|"<>]/g, '-') : 'Untitled';
+        folder?.file(`${safeTitle}_${book.book_id}.png`, base64Data, { base64: true });
       }
 
       const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `Library_Archives_QR_${new Date().toLocaleDateString()}.zip`);
-      alert("✅ QR Archive ready for download.");
-    } catch (err) {
-      alert("❌ Export failed.");
+      saveAs(content, `Library_Archives_QR_${new Date().toISOString().split('T')[0]}.zip`);
+      alert(`✅ QR Archive ready for download: ${books.length} QR codes generated!`);
+    } catch (err: any) {
+      console.error("QR Export Error:", err);
+      alert("❌ Export failed: " + (err.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -526,10 +645,37 @@ export default function AdminDashboard() {
   const handleUpdateSettings = async () => {
     setLoading(true);
     try {
-      await supabase.from('library_settings').upsert({ id: 'global', ...globalSettings, categories });
+      await supabase.from('library_settings').upsert({ id: 'global', ...globalSettings, categories, book_fields: bookFields });
       alert("✅ Global policies and categories synchronized.");
     } catch (err) { alert("❌ Synchronization failed."); }
     finally { setLoading(false); }
+  };
+
+  const handleAddBookField = () => {
+    if (!newField.name.trim() || !newField.key.trim()) return;
+    const field: BookField = {
+      id: Date.now().toString(),
+      name: newField.name.trim(),
+      key: newField.key.trim(),
+      type: newField.type,
+      required: newField.required,
+      options: newField.type === 'select' ? [] : undefined,
+      order: bookFields.length + 1
+    };
+    setBookFields([...bookFields, field]);
+    setNewField({ id: '', name: '', key: '', type: 'text', required: false, order: 0 });
+  };
+
+  const handleUpdateBookField = async (updatedField: BookField) => {
+    const updatedFields = bookFields.map(f => f.id === updatedField.id ? updatedField : f);
+    setBookFields(updatedFields);
+    await supabase.from('library_settings').upsert({ id: 'global', ...globalSettings, categories, book_fields: updatedFields });
+  };
+
+  const handleDeleteBookField = (id: string) => {
+    if (confirm("Delete this field? This may affect existing book data.")) {
+      setBookFields(bookFields.filter(f => f.id !== id).map((f, i) => ({ ...f, order: i + 1 })));
+    }
   };
 
   const getTopReaders = () => {
@@ -962,7 +1108,7 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, y: 0 }} 
                         transition={{ delay: i * 0.03 }} 
                         key={book.id} 
-                        className="group relative bg-[#0f172a]/40 border border-white/5 rounded-[2rem] overflow-hidden hover:border-indigo-500/30 transition-all duration-500 flex flex-col h-[420px]"
+                        className="group relative bg-[#0f172a]/40 border border-white/5 rounded-[2rem] overflow-hidden hover:border-indigo-500/30 transition-all duration-500 flex flex-col"
                       >
                          {/* Visual Background Element */}
                          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-indigo-500/10 transition-colors" />
@@ -995,15 +1141,53 @@ export default function AdminDashboard() {
                                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest italic">{book.author || "Anonymous Authority"}</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                               <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 flex flex-col justify-center">
-                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1 italic">Archive ID</span>
-                                  <span className="text-[9px] font-black text-gray-400 uppercase truncate">{book.book_id}</span>
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                               <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Archive ID</span>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.book_id}</span>
                                </div>
-                               <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 flex flex-col justify-center">
-                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1 italic">Valuation</span>
-                                  <span className="text-[11px] font-black text-white italic">₹{getBookDisplayPrice(book) || "N/A"}</span>
+                               <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Valuation</span>
+                                  <span className="text-[9px] font-black text-white italic">₹{getBookDisplayPrice(book) || "N/A"}</span>
                                </div>
+                               <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Pages</span>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase">{book.pages || "N/A"}</span>
+                               </div>
+                               <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Subcategory</span>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.subcategory || "N/A"}</span>
+                               </div>
+                               {book.publisher && (
+                                 <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col col-span-2">
+                                    <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Publisher</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.publisher}</span>
+                                 </div>
+                               )}
+                               {book.shelf_location && (
+                                 <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col col-span-2">
+                                    <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Location</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.shelf_location}</span>
+                                 </div>
+                               )}
+                               {book.language && (
+                                 <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col col-span-2">
+                                    <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Language</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.language}</span>
+                                 </div>
+                               )}
+                               {book.how_much_value && (
+                                 <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                                    <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">How Much Value</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase">{book.how_much_value}</span>
+                                 </div>
+                               )}
+                               {book.which_value && (
+                                 <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+                                    <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Which Value</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.which_value}</span>
+                                 </div>
+                               )}
                             </div>
 
                             {/* Action Footer */}
@@ -1014,6 +1198,12 @@ export default function AdminDashboard() {
                                >
                                   <PenTool className="w-3 h-3" />
                                   <span>Modify</span>
+                               </button>
+                               <button 
+                                 onClick={() => handleViewBookDetails(book)} 
+                                 className="px-4 py-3 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-xl border border-indigo-500/10 transition-all flex items-center justify-center"
+                               >
+                                  <Info className="w-3.5 h-3.5" />
                                </button>
                                <button 
                                  onClick={() => { if(confirm('Erase this unit from catalog?')) supabase.from('books').delete().eq('id', book.id).then(fetchData); }}
@@ -1031,9 +1221,9 @@ export default function AdminDashboard() {
 
             {activeTab === 'settings' && (
               <motion.div key="settings" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Admin Profile Settings */}
-                    <div className="bg-white/5 border border-white/5 p-8 md:p-12 rounded-[4rem] backdrop-blur-3xl space-y-8 md:space-y-10">
+                    <div className="bg-white/5 border border-white/5 p-6 md:p-8 rounded-[2rem] backdrop-blur-3xl space-y-6">
                        <h3 className="text-xs font-black uppercase tracking-[0.4em] text-indigo-400 flex items-center italic"><User className="w-5 h-5 mr-4" />Admin Account Settings</h3>
                        <form onSubmit={handleUpdateAdminProfile} className="space-y-6 md:space-y-8">
                           <div className="space-y-4">
@@ -1051,7 +1241,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Category Management */}
-                    <div className="bg-white/5 border border-white/5 p-8 md:p-12 rounded-[4rem] backdrop-blur-3xl space-y-8 md:space-y-10">
+                    <div className="bg-white/5 border border-white/5 p-6 md:p-8 rounded-[2rem] backdrop-blur-3xl space-y-6">
                        <h3 className="text-xs font-black uppercase tracking-[0.4em] text-emerald-400 flex items-center italic"><Bookmark className="w-5 h-5 mr-4" />Category Management</h3>
                        <div className="space-y-6">
                           {/* Current Categories */}
@@ -1153,7 +1343,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Global Rules */}
-                    <div className="bg-white/5 border border-white/5 p-8 md:p-12 rounded-[4rem] backdrop-blur-3xl space-y-8 md:space-y-10">
+                    <div className="bg-white/5 border border-white/5 p-6 md:p-8 rounded-[2rem] backdrop-blur-3xl space-y-6">
                        <h3 className="text-xs font-black uppercase tracking-[0.4em] text-amber-400 flex items-center italic"><ShieldAlert className="w-5 h-5 mr-4" />Global Lending Policies</h3>
                        <div className="space-y-6 md:space-y-8">
                           <div className="space-y-4">
@@ -1170,19 +1360,110 @@ export default function AdminDashboard() {
                        </div>
                     </div>
 
-                    {/* Danger Zone */}
-                    <div className="bg-rose-500/5 border border-rose-500/20 p-12 rounded-[4rem] backdrop-blur-3xl space-y-10">
-                       <h3 className="text-xs font-black uppercase tracking-[0.4em] text-rose-500 flex items-center italic"><AlertTriangle className="w-5 h-5 mr-4" />Critical Danger Zone</h3>
+                    {/* Book Fields Management */}
+                    <div className="bg-white/5 border border-white/5 p-6 md:p-8 rounded-[2rem] backdrop-blur-3xl space-y-6">
+                       <h3 className="text-xs font-black uppercase tracking-[0.4em] text-purple-400 flex items-center italic"><FileText className="w-5 h-5 mr-4" />Book Fields Management</h3>
                        <div className="space-y-6">
-                          <div className="p-8 bg-black/40 rounded-[2.5rem] border border-rose-500/10 space-y-4">
+                          {/* Current Fields */}
+                          <div className="space-y-4">
+                             <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest block ml-2">Current Fields</label>
+                             <div className="space-y-3 max-h-64 overflow-y-auto custom-scroll">
+                                {bookFields.sort((a, b) => a.order - b.order).map((field) => (
+                                   <div key={field.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-purple-500/30 transition-all">
+                                      <div className="flex-1">
+                                         <div className="flex items-center space-x-3">
+                                            <span className="font-bold text-white italic text-sm">{field.name}</span>
+                                            <span className={`px-2 py-1 rounded text-[6px] font-black uppercase tracking-widest ${field.required ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}`}>
+                                               {field.required ? 'Required' : 'Optional'}
+                                            </span>
+                                            <span className="px-2 py-1 rounded text-[6px] font-black uppercase tracking-widest bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                               {field.type}
+                                            </span>
+                                         </div>
+                                         <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mt-1">Key: {field.key}</p>
+                                      </div>
+                                      <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                         <button
+                                            onClick={() => {
+                                               setEditingField(field);
+                                               setShowEditField(true);
+                                            }}
+                                            className="p-2 hover:bg-purple-600/20 rounded-xl transition-colors"
+                                         >
+                                            <PenTool className="w-4 h-4 text-purple-400" />
+                                         </button>
+                                         <button
+                                            onClick={() => handleDeleteBookField(field.id)}
+                                            className="p-2 hover:bg-rose-600/20 rounded-xl transition-colors"
+                                         >
+                                            <Trash2 className="w-4 h-4 text-rose-400" />
+                                         </button>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          </div>
+                          {/* Add New Field */}
+                          <div className="space-y-4">
+                             <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest block ml-2">Add New Field</label>
+                             <div className="space-y-3">
+                                <input
+                                   value={newField.name}
+                                   onChange={e => setNewField({...newField, name: e.target.value})}
+                                   className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 ring-purple-500/20"
+                                   placeholder="Field name (e.g., Total Pages)"
+                                />
+                                <input
+                                   value={newField.key}
+                                   onChange={e => setNewField({...newField, key: e.target.value})}
+                                   className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 ring-purple-500/20"
+                                   placeholder="Field key (e.g., total_pages)"
+                                />
+                                <div className="flex space-x-3">
+                                   <select
+                                      value={newField.type}
+                                      onChange={e => setNewField({...newField, type: e.target.value as any})}
+                                      className="flex-1 bg-black/40 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none"
+                                   >
+                                      <option value="text">Text</option>
+                                      <option value="number">Number</option>
+                                      <option value="select">Select</option>
+                                      <option value="textarea">Textarea</option>
+                                   </select>
+                                   <label className="flex items-center space-x-2">
+                                      <input
+                                         type="checkbox"
+                                         checked={newField.required}
+                                         onChange={e => setNewField({...newField, required: e.target.checked})}
+                                         className="w-4 h-4"
+                                      />
+                                      <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Required</span>
+                                   </label>
+                                </div>
+                                <button
+                                   onClick={handleAddBookField}
+                                   className="w-full py-4 bg-purple-600 hover:bg-purple-500 rounded-2xl font-black uppercase text-xs tracking-widest text-white transition-all"
+                                >
+                                   ADD FIELD
+                                </button>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div className="bg-rose-500/5 border border-rose-500/20 p-8 md:p-10 rounded-[2rem] backdrop-blur-3xl space-y-8">
+                       <h3 className="text-xs font-black uppercase tracking-[0.4em] text-rose-500 flex items-center italic"><AlertTriangle className="w-4 h-4 mr-3" />Critical Danger Zone</h3>
+                       <div className="space-y-5">
+                          <div className="p-6 bg-black/40 rounded-[2rem] border border-rose-500/10 space-y-4">
                              <p className="text-[9px] font-black text-rose-500/60 uppercase tracking-widest italic">Purge Entire Archive</p>
                              <p className="text-xs font-bold text-gray-500 leading-relaxed">This action will permanently erase all book records and logs from the central registry. This cannot be undone.</p>
-                             <button onClick={() => { if(confirm('MASTER PURGE: Are you absolutely sure?')) alert('Purge command blocked for safety.'); }} className="w-full py-6 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-[1.5rem] font-black uppercase text-[8px] tracking-[0.3em] transition-all border border-rose-500/20">Execute Master Purge</button>
+                             <button onClick={() => { if(confirm('MASTER PURGE: Are you absolutely sure?')) alert('Purge command blocked for safety.'); }} className="w-full py-5 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-[1.5rem] font-black uppercase text-[8px] tracking-[0.3em] transition-all border border-rose-500/20">Execute Master Purge</button>
                           </div>
-                          <div className="p-8 bg-black/40 rounded-[2.5rem] border border-rose-500/10 space-y-4">
+                          <div className="p-6 bg-black/40 rounded-[2rem] border border-rose-500/10 space-y-4">
                              <p className="text-[9px] font-black text-rose-500/60 uppercase tracking-widest italic">Reset All Identities</p>
                              <p className="text-xs font-bold text-gray-500 leading-relaxed">Forces a password reset for every user in the database. All active sessions will be terminated.</p>
-                             <button onClick={() => { if(confirm('IDENTITY RESET: Proceed?')) alert('Command blocked.'); }} className="w-full py-6 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-[1.5rem] font-black uppercase text-[8px] tracking-[0.3em] transition-all border border-rose-500/20">Initiate Identity Reset</button>
+                             <button onClick={() => { if(confirm('IDENTITY RESET: Proceed?')) alert('Command blocked.'); }} className="w-full py-5 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-[1.5rem] font-black uppercase text-[8px] tracking-[0.3em] transition-all border border-rose-500/20">Initiate Identity Reset</button>
                           </div>
                        </div>
                     </div>
@@ -1353,12 +1634,18 @@ export default function AdminDashboard() {
                      &nbsp;&nbsp;&nbsp;&nbsp;"authority": "string (Required)",<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;"price": "number (Required)",<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;"category": "string (Required)",<br/>
-                     &nbsp;&nbsp;&nbsp;&nbsp;"sub_category": "string (Required)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"sub_category": "string (Optional)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"page_count": "number (Required)",<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;"serial_id": "string (Optional)",<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;"publisher": "string (Optional)",<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;"language": "string (Optional)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"isbn": "string (Optional)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"description": "string (Optional)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"how_much_value": "string (Optional)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"which_value": "string (Optional)",<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;"shelf_position": "string (Optional)",<br/>
-                     &nbsp;&nbsp;&nbsp;&nbsp;"book_url": "string (Optional)"<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"row position": "string (Optional)",<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;"cover page_url": "string (Optional)"<br/>
                      &nbsp;&nbsp;{"}"}<br/>
                      {"]"}
                    </code>
@@ -1638,60 +1925,54 @@ export default function AdminDashboard() {
               <button onClick={() => setShowAddBook(false)} className="absolute top-4 right-4 md:top-8 md:right-8 text-gray-500 hover:text-white transition-colors z-10"><X className="w-6 h-6 md:w-8 md:h-8" /></button>
               <h2 className="text-2xl md:text-3xl font-black italic mb-6 md:mb-10 uppercase tracking-tighter pr-8">Archive_New_Unit</h2>
               <form onSubmit={handleAddBook} className="space-y-6 md:space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Archive Nomenclature (Required)</label>
-                    <input required value={newBookData.title} onChange={e => setNewBookData({...newBookData, title: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="Book Name..." />
+                {bookFields.sort((a, b) => a.order - b.order).map(field => (
+                  <div key={field.id}>
+                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">
+                      {field.name} {field.required ? '(Required)' : '(Optional)'}
+                    </label>
+                    {field.type === 'text' && (
+                      <input
+                        required={field.required}
+                        value={newBookData[field.key] || ''}
+                        onChange={e => setNewBookData({...newBookData, [field.key]: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20"
+                        placeholder={`Enter ${field.name.toLowerCase()}...`}
+                      />
+                    )}
+                    {field.type === 'number' && (
+                      <input
+                        type="number"
+                        required={field.required}
+                        value={newBookData[field.key] || ''}
+                        onChange={e => setNewBookData({...newBookData, [field.key]: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20"
+                        placeholder="0.00"
+                      />
+                    )}
+                    {field.type === 'select' && (
+                      <select
+                        required={field.required}
+                        value={newBookData[field.key] || ''}
+                        onChange={e => setNewBookData({...newBookData, [field.key]: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20 text-white"
+                      >
+                        <option value="" className="bg-[#0f172a]">Select {field.name}</option>
+                        {(field.key === 'category' ? categories : (field.options || [])).map(option => (
+                          <option key={option} value={option} className="bg-[#0f172a]">{option}</option>
+                        ))}
+                      </select>
+                    )}
+                    {field.type === 'textarea' && (
+                      <textarea
+                        required={field.required}
+                        value={newBookData[field.key] || ''}
+                        onChange={e => setNewBookData({...newBookData, [field.key]: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20 h-20 md:h-24 resize-none"
+                        placeholder={`Enter ${field.name.toLowerCase()}...`}
+                      />
+                    )}
                   </div>
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Primary Authority (Author) (Required)</label>
-                    <input required value={newBookData.author} onChange={e => setNewBookData({...newBookData, author: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="Author Name" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Price (₹) (Required)</label>
-                    <input required type="number" value={newBookData.price} onChange={e => setNewBookData({...newBookData, price: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="0.00" />
-                  </div>
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Archive ID / Serial (Optional)</label>
-                    <input value={newBookData.book_id} onChange={e => setNewBookData({...newBookData, book_id: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="BOOK-001" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="space-y-4">
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest block ml-2">Category (Required)</label>
-                    <select 
-                      required 
-                      value={newBookData.category} 
-                      onChange={e => setNewBookData({...newBookData, category: e.target.value})}
-                      className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20 text-white"
-                    >
-                      <option value="" className="bg-[#0f172a]">Select Category</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat} className="bg-[#0f172a]">{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Language (Optional)</label>
-                    <input value={newBookData.language} onChange={e => setNewBookData({...newBookData, language: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="English, etc." />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Shelf Number/Name (Optional)</label>
-                    <input value={newBookData.shelf} onChange={e => setNewBookData({...newBookData, shelf: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="Shelf A, Shelf 1..." />
-                  </div>
-                  <div>
-                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Row (Optional)</label>
-                    <input value={newBookData.row} onChange={e => setNewBookData({...newBookData, row: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="Row 1, Row B..." />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Book URL / Cover URL (Optional)</label>
-                  <input value={newBookData.cover_image_url} onChange={e => setNewBookData({...newBookData, cover_image_url: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500/20" placeholder="https://..." />
-                </div>
+                ))}
                 <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 p-6 md:p-8 rounded-[2rem] font-black uppercase tracking-[0.4em] text-white shadow-2xl shadow-emerald-900/40 transition-all mt-4 text-xs">
                   {loading ? 'SYNCHRONIZING...' : 'COMMIT TO CATALOG'}
                 </button>
@@ -1741,11 +2022,23 @@ export default function AdminDashboard() {
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Location</span>
                         <span className="text-xs md:text-sm font-bold text-gray-300 italic">{selectedBookDetails.shelf_location || "N/A"}</span>
                       </div>
+                      <div>
+                        <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">How Much Value</span>
+                        <span className="text-xs md:text-sm font-bold text-gray-300 italic">{selectedBookDetails.how_much_value || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Which Value</span>
+                        <span className="text-xs md:text-sm font-bold text-gray-300 italic">{selectedBookDetails.which_value || "N/A"}</span>
+                      </div>
                     </div>
                     <div className="space-y-3 md:space-y-4">
                       <div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Category</span>
                         <span className="text-xs md:text-sm font-bold text-indigo-400 italic">{selectedBookDetails.category || "General"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Sub Category</span>
+                        <span className="text-xs md:text-sm font-bold text-gray-300 italic">{selectedBookDetails.subcategory || "N/A"}</span>
                       </div>
                       <div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Language</span>
@@ -1808,6 +2101,57 @@ export default function AdminDashboard() {
                   <p className="text-xs md:text-sm font-medium text-gray-300 leading-relaxed italic">{selectedBookDetails.description}</p>
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Field Modal */}
+      <AnimatePresence>
+        {showEditField && editingField && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowEditField(false); setEditingField(null); }} className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 md:p-6">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-[#0f172a] border border-white/10 w-full max-w-sm md:max-w-lg rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 relative overflow-hidden max-h-[90vh] overflow-y-auto">
+              <button onClick={() => { setShowEditField(false); setEditingField(null); }} className="absolute top-4 right-4 md:top-8 md:right-8 text-gray-500 hover:text-white transition-colors z-10"><X className="w-6 h-6 md:w-8 md:h-8" /></button>
+              <h2 className="text-2xl md:text-3xl font-black italic mb-6 md:mb-10 uppercase tracking-tighter pr-8 text-purple-400">Modify_Field</h2>
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateBookField(editingField); setShowEditField(false); setEditingField(null); }} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  <div>
+                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Field Name</label>
+                    <input required value={editingField.name} onChange={e => setEditingField({...editingField, name: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-purple-500/20" />
+                  </div>
+                  <div>
+                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Field Key</label>
+                    <input required value={editingField.key} onChange={e => setEditingField({...editingField, key: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-purple-500/20" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  <div>
+                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Type</label>
+                    <select value={editingField.type} onChange={e => setEditingField({...editingField, type: e.target.value as any})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-purple-500/20">
+                      <option value="text">Text</option>
+                      <option value="number">Number</option>
+                      <option value="select">Select</option>
+                      <option value="textarea">Textarea</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center space-x-4 p-4 md:p-5 bg-white/5 rounded-2xl border border-white/10">
+                    <input type="checkbox" checked={editingField.required} onChange={e => setEditingField({...editingField, required: e.target.checked})} className="w-5 h-5 accent-purple-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 italic">Required</span>
+                  </div>
+                </div>
+                {editingField.type === 'select' && (
+                  <div>
+                    <label className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-2 block ml-2">Options (comma separated)</label>
+                    <input value={(editingField.options || []).join(', ')} onChange={e => setEditingField({...editingField, options: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} className="w-full bg-black/40 border border-white/10 p-4 md:p-5 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-purple-500/20" placeholder="Option 1, Option 2, Option 3" />
+                  </div>
+                )}
+                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-500 p-6 md:p-8 rounded-[2rem] font-black uppercase tracking-[0.4em] text-white shadow-2xl shadow-purple-900/40 transition-all mt-4 text-xs">
+                  UPDATE FIELD
+                </button>
+                <button type="button" onClick={() => { setShowEditField(false); setEditingField(null); }} className="w-full md:hidden bg-gray-600 hover:bg-gray-500 p-4 rounded-2xl font-black uppercase tracking-[0.4em] text-white transition-all text-xs">
+                  CANCEL
+                </button>
+              </form>
             </motion.div>
           </motion.div>
         )}
