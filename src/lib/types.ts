@@ -46,6 +46,7 @@ export interface Book {
     students?: Student;
   };
   created_at?: string;
+  how_much_value?: string | number;
 }
 
 export interface LibraryLog {
