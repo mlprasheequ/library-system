@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS students (
     is_responsible BOOLEAN DEFAULT false,
     is_admin BOOLEAN DEFAULT false,
     password TEXT,
+    last_password_change TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -35,6 +36,11 @@ CREATE TABLE IF NOT EXISTS books (
     isbn TEXT,
     pages TEXT,
     description TEXT,
+    how_much_value TEXT,
+    which_value TEXT,
+    archive_nomenclature TEXT,
+    shelf TEXT,
+    row TEXT,
     book_id TEXT NOT NULL UNIQUE,
     status TEXT DEFAULT 'available' CHECK (status IN ('available', 'borrowed', 'lost')),
     current_borrower_id UUID REFERENCES students(id),

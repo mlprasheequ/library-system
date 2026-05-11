@@ -357,13 +357,14 @@ export default function AdminDashboard() {
       // Map fields to book data
       bookFields.forEach(field => {
         if (field.key in newBookData) {
+          // Skip columns that might not exist in the database to prevent "schema cache" errors
+          const problematicFields = ['how_much_value', 'which_value', 'archive_nomenclature', 'shelf', 'row'];
+          if (problematicFields.includes(field.key)) {
+            return;
+          }
+
           if (field.key === 'price') {
             bookData[field.key] = parseFloat(newBookData[field.key] || "0");
-          } else if (field.key === 'shelf' || field.key === 'row') {
-            // Handle shelf and row specially for shelf_location
-            if (field.key === 'shelf') {
-              bookData.shelf_location = `${newBookData.shelf || ''}${newBookData.row ? `, ${newBookData.row}` : ''}`;
-            }
           } else if (field.key === 'category') {
             bookData[field.key] = newBookData[field.key];
           } else {
@@ -372,14 +373,29 @@ export default function AdminDashboard() {
         }
       });
       
-      // Also store how_much_value and which_value in description for reference
+      // Combined shelf_location is safe to keep
+      if (newBookData.shelf || newBookData.row) {
+        bookData.shelf_location = `${newBookData.shelf || ''}${newBookData.row ? `, ${newBookData.row}` : ''}`;
+      }
+      
+      // Store all extra info in description for reference
       let additionalInfo = [];
+      if (newBookData.archive_nomenclature) {
+        additionalInfo.push(`Archive Nomenclature: ${newBookData.archive_nomenclature}`);
+      }
       if (newBookData.how_much_value) {
         additionalInfo.push(`How Much Value: ${newBookData.how_much_value}`);
       }
       if (newBookData.which_value) {
         additionalInfo.push(`Which Value: ${newBookData.which_value}`);
       }
+      if (newBookData.shelf) {
+        additionalInfo.push(`Shelf: ${newBookData.shelf}`);
+      }
+      if (newBookData.row) {
+        additionalInfo.push(`Row: ${newBookData.row}`);
+      }
+
       if (additionalInfo.length > 0) {
         bookData.description = (bookData.description || '') + (bookData.description ? '\n\n' : '') + additionalInfo.join('\n');
       }
@@ -535,31 +551,39 @@ export default function AdminDashboard() {
         processedBook.subcategory = b.sub_category || b.subcategory || '';
         processedBook.publisher = b.publisher || '';
         processedBook.language = b.language || '';
-        processedBook.shelf = b.shelf_position || b.shelf || '';
-        processedBook.row = b['row position'] || b.row || '';
         processedBook.isbn = b.isbn || '';
         processedBook.description = b.description || '';
         processedBook.cover_image_url = b['cover page_url'] || b.book_url || b.cover_image_url || '';
         
-        // Set how_much_value and which_value as top-level fields
-        processedBook.how_much_value = b.how_much_value || b['How Much Value'] || '';
-        processedBook.which_value = b.which_value || b['Which Value'] || '';
-        
-        // Also store them in description as additional info for reference
+        // Preserve all extra fields in the description to avoid database errors
         let additionalInfo = [];
-        if (b.how_much_value || b['How Much Value']) {
-          additionalInfo.push(`How Much Value: ${b.how_much_value || b['How Much Value']}`);
+        const howMuchValue = b.how_much_value || b['How Much Value'] || '';
+        const whichValue = b.which_value || b['Which Value'] || '';
+        const archiveNomenclature = b.archive_nomenclature || b.book_nomenclature || '';
+        const shelf = b.shelf_position || b.shelf || '';
+        const row = b['row position'] || b.row || '';
+
+        if (archiveNomenclature) {
+          additionalInfo.push(`Archive Nomenclature: ${archiveNomenclature}`);
         }
-        if (b.which_value || b['Which Value']) {
-          additionalInfo.push(`Which Value: ${b.which_value || b['Which Value']}`);
+        if (howMuchValue) {
+          additionalInfo.push(`How Much Value: ${howMuchValue}`);
         }
+        if (whichValue) {
+          additionalInfo.push(`Which Value: ${whichValue}`);
+        }
+        if (shelf) {
+          additionalInfo.push(`Shelf: ${shelf}`);
+        }
+        if (row) {
+          additionalInfo.push(`Row: ${row}`);
+        }
+
         if (additionalInfo.length > 0) {
           processedBook.description = (processedBook.description || '') + (processedBook.description ? '\n\n' : '') + additionalInfo.join('\n');
         }
 
-        // Handle shelf_location
-        const shelf = processedBook.shelf;
-        const row = processedBook.row;
+        // Handle shelf_location (this column exists in the base schema)
         if (shelf || row) {
           processedBook.shelf_location = `${shelf || ''}${row ? `, ${row}` : ''}`;
         }

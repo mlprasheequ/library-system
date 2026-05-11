@@ -54,7 +54,7 @@ export default function ResponsibleDashboard() {
   const [newBook, setNewBook] = useState({ 
     title: "", book_id: "", author: "", publisher: "", category: "", subcategory: "", rate: "", 
     shelf: "", row: "", language: "English", price: "", cover_image_url: "", 
-    isbn: "", pages: "", description: "" 
+    isbn: "", pages: "", description: "", how_much_value: "", which_value: "" 
   });
   const [globalSettings, setGlobalSettings] = useState<any>(null);
 
@@ -235,6 +235,25 @@ export default function ResponsibleDashboard() {
         color: { dark: '#000000', light: '#ffffff' }
       });
 
+      // Also store extra info in description for reference to avoid database errors
+      let finalDescription = newBook.description || "";
+      let additionalInfo = [];
+      if (newBook.how_much_value) {
+        additionalInfo.push(`How Much Value: ${newBook.how_much_value}`);
+      }
+      if (newBook.which_value) {
+        additionalInfo.push(`Which Value: ${newBook.which_value}`);
+      }
+      if (newBook.shelf) {
+        additionalInfo.push(`Shelf: ${newBook.shelf}`);
+      }
+      if (newBook.row) {
+        additionalInfo.push(`Row: ${newBook.row}`);
+      }
+      if (additionalInfo.length > 0) {
+        finalDescription = (finalDescription || '') + (finalDescription ? '\n\n' : '') + additionalInfo.join('\n');
+      }
+
       const { error } = await supabase.from('books').upsert([{
         book_id,
         title: newBook.title,
@@ -249,7 +268,7 @@ export default function ResponsibleDashboard() {
         price: parseFloat(newBook.price || "0"),
         isbn: newBook.isbn || "",
         pages: 0,
-        description: newBook.description || "",
+        description: finalDescription,
         status: 'available'
       }], { onConflict: 'book_id' });
 
@@ -259,7 +278,7 @@ export default function ResponsibleDashboard() {
       await supabase.from('library_settings').upsert({ id: 'global', ...globalSettings, categories });
 
       setShowAddBook(false);
-      setNewBook({ title: "", book_id: "", author: "", publisher: "", category: "", subcategory: "", rate: "", shelf: "", row: "", language: "English", price: "", cover_image_url: "", isbn: "", pages: "", description: "" });
+      setNewBook({ title: "", book_id: "", author: "", publisher: "", category: "", subcategory: "", rate: "", shelf: "", row: "", language: "English", price: "", cover_image_url: "", isbn: "", pages: "", description: "", how_much_value: "", which_value: "" });
       fetchData();
       alert("✅ Archive unit registered with QR code.");
     } catch (err: any) { 
@@ -334,6 +353,8 @@ export default function ResponsibleDashboard() {
         cover_image_url: bookData.book_url || bookData.cover_image_url || "",
         isbn: bookData.isbn || "",
         pages: bookData.pages || "",
+        how_much_value: bookData.how_much_value || bookData['How Much Value'] || "",
+        which_value: bookData.which_value || bookData['Which Value'] || "",
         description: bookData.description || ""
       });
       setShowScanner(false);
@@ -365,6 +386,35 @@ export default function ResponsibleDashboard() {
           categoriesChanged = true;
         }
 
+        // Set values in description as additional info for reference
+        let finalDescription = b.description || b.desc || "";
+        let additionalInfo = [];
+        const howMuchValue = b.how_much_value || b['How Much Value'] || '';
+        const whichValue = b.which_value || b['Which Value'] || '';
+        const shelf = b.shelf || b.shelf_position || '';
+        const row = b.row || b['row position'] || '';
+        const archiveNomenclature = b.archive_nomenclature || b.book_nomenclature || '';
+        
+        if (archiveNomenclature) {
+          additionalInfo.push(`Archive Nomenclature: ${archiveNomenclature}`);
+        }
+        if (howMuchValue) {
+          additionalInfo.push(`How Much Value: ${howMuchValue}`);
+        }
+        if (whichValue) {
+          additionalInfo.push(`Which Value: ${whichValue}`);
+        }
+        if (shelf) {
+          additionalInfo.push(`Shelf: ${shelf}`);
+        }
+        if (row) {
+          additionalInfo.push(`Row: ${row}`);
+        }
+
+        if (additionalInfo.length > 0) {
+          finalDescription = (finalDescription || '') + (finalDescription ? '\n\n' : '') + additionalInfo.join('\n');
+        }
+
         return {
           book_id,
           title: b.title || b.book_nomenclature || "Untitled Unit",
@@ -374,10 +424,10 @@ export default function ResponsibleDashboard() {
           subcategory: "",
           price: parseFloat(b.price || b.valuation || "0"),
           language: b.language || "English",
-          shelf_location: b.shelf_location || b.location || b.shelf_position || "",
+          shelf_location: b.shelf_location || b.location || (shelf ? `${shelf}${row ? `, ${row}` : ''}` : ""),
           cover_image_url: b.cover_image_url || b.book_url || b.image_url || "",
           isbn: b.isbn || "",
-          description: b.description || b.desc || "",
+          description: finalDescription,
           status: 'available'
         };
       }));
