@@ -491,7 +491,7 @@ export default function AdminDashboard() {
       const bookData = JSON.parse(data);
       setNewBookData({
         title: bookData.book_nomenclature || bookData.title || "",
-        book_id: bookData.serial_id || bookData.book_id || `BK-${Date.now()}`,
+        book_id: bookData.isbn || bookData.serial_id || bookData.book_id || `BK-${Date.now()}`,
         author: bookData.authority || bookData.author || "",
         publisher: bookData.publisher || "",
         category: bookData.category || "",
@@ -527,7 +527,7 @@ export default function AdminDashboard() {
       let categoriesChanged = false;
 
       const processedBooks = await Promise.all(booksData.map(async (b: any) => {
-        const book_id = b.book_id || b.serial_id || `BK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const book_id = b.isbn || b.book_id || b.serial_id || `BK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         
         // Handle new categories from bulk import
         const categoryName = b.category || b.book_category || "General";
@@ -880,7 +880,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                    <p className="font-black text-xs text-white italic truncate max-w-[120px] md:max-w-[150px]">"{book.title}"</p>
-                                   <p className="text-[6px] md:text-[7px] font-black text-gray-600 uppercase">{book.book_id}</p>
+                                   <p className="text-[6px] md:text-[7px] font-black text-gray-600 uppercase">ISBN: {book.isbn || book.book_id}</p>
                                    <p className="text-[6px] md:text-[7px] font-black text-emerald-400 uppercase">{book.price ? `$${book.price}` : 'N/A'}</p>
                                 </div>
                              </div>
@@ -1167,8 +1167,8 @@ export default function AdminDashboard() {
 
                             <div className="grid grid-cols-2 gap-2 mb-3">
                                <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
-                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Archive ID</span>
-                                  <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.book_id}</span>
+                                  <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">ISBN</span>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.isbn || book.book_id}</span>
                                </div>
                                <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
                                   <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Valuation</span>

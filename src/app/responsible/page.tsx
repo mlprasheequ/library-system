@@ -340,7 +340,7 @@ export default function ResponsibleDashboard() {
       const bookData = JSON.parse(data);
       setNewBook({
         title: bookData.book_nomenclature || bookData.title || "",
-        book_id: bookData.serial_id || bookData.book_id || `BK-${Date.now()}`,
+        book_id: bookData.isbn || bookData.serial_id || bookData.book_id || `BK-${Date.now()}`,
         author: bookData.authority || bookData.author || "",
         publisher: bookData.publisher || "",
         category: bookData.category || "",
@@ -376,7 +376,7 @@ export default function ResponsibleDashboard() {
       let categoriesChanged = false;
 
       const processedBooks = await Promise.all(booksData.map(async (b: any) => {
-        const book_id = b.book_id || b.serial_id || `BK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const book_id = b.isbn || b.book_id || b.serial_id || `BK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         
         // Handle new categories from bulk import
         const categoryName = b.category || b.book_category || "General";
@@ -653,7 +653,7 @@ export default function ResponsibleDashboard() {
                                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black ${selectedBook?.id === b.id ? 'bg-white/20' : 'bg-emerald-500/10 text-emerald-400'}`}><BookOpen className="w-4 h-4" /></div>
                                      <div className="text-left">
                                         <p className="font-black text-[10px] italic leading-none mb-1">"{b.title}"</p>
-                                        <p className="text-[7px] font-black opacity-50 uppercase">{b.book_id}</p>
+                                        <p className="text-[7px] font-black opacity-50 uppercase">ISBN: {b.isbn || b.book_id}</p>
                                      </div>
                                   </div>
                                   {selectedBook?.id === b.id && <CheckCircle2 className="w-4 h-4" />}
@@ -747,7 +747,7 @@ export default function ResponsibleDashboard() {
                                        </td>
                                        <td className="p-6">
                                           <p className="font-black text-white italic tracking-tight uppercase text-xs leading-none mb-1">"{log.books?.title}"</p>
-                                          <p className="text-[7px] font-black text-gray-700 uppercase">ID: {log.books?.book_id}</p>
+                                          <p className="text-[7px] font-black text-gray-700 uppercase">ISBN: {log.books?.isbn || log.books?.book_id}</p>
                                        </td>
                                        <td className="p-6 text-right">
                                           <button onClick={() => handleReturn(log.id, log.books.id)} className="px-5 py-3 bg-emerald-600/10 text-emerald-500 hover:bg-emerald-600 hover:text-white rounded-xl font-black uppercase text-[8px] tracking-widest transition-all border border-emerald-500/20">Return</button>

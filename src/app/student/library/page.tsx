@@ -363,8 +363,8 @@ export default function StudentLibraryDashboard() {
 
                        <div className="grid grid-cols-2 gap-2 mb-3">
                           <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
-                             <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Archive ID</span>
-                             <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.book_id}</span>
+                             <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">ISBN</span>
+                             <span className="text-[8px] font-black text-gray-400 uppercase truncate">{book.isbn || book.book_id}</span>
                           </div>
                           <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
                              <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-0.5 italic">Price</span>
@@ -541,10 +541,9 @@ export default function StudentLibraryDashboard() {
 
                    <div className="pt-6 border-t border-white/5 flex flex-wrap items-center gap-4 justify-between">
                       <div className="flex items-center space-x-6 text-gray-500">
-                         <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Archive ID</span><span className="text-[9px] font-bold text-white">{selectedBook.book_id || 'N/A'}</span></div>
+                         <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">ISBN</span><span className="text-[9px] font-bold text-white">{selectedBook.isbn || selectedBook.book_id || 'N/A'}</span></div>
                          <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Publisher</span><span className="text-[9px] font-bold text-white">{selectedBook.publisher || 'N/A'}</span></div>
                          <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Language</span><span className="text-[9px] font-bold text-white">{selectedBook.language || 'English'}</span></div>
-                         <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">ISBN</span><span className="text-[9px] font-bold text-white">{selectedBook.isbn || 'N/A'}</span></div>
                          {selectedBook.shelf_location && (
                            <div className="flex flex-col"><span className="text-[7px] font-black uppercase italic mb-0.5">Location</span><span className="text-[9px] font-bold text-white">{selectedBook.shelf_location}</span></div>
                          )}
