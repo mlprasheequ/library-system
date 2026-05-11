@@ -930,7 +930,7 @@ export default function ResponsibleDashboard() {
                                  </div>
                                  <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 flex flex-col justify-center">
                                     <span className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1 italic">Price</span>
-                                    <span className="text-[9px] font-black text-emerald-400 italic truncate">{book.price ? `$${book.price}` : 'N/A'}</span>
+                                    <span className="text-[9px] font-black text-emerald-400 italic truncate">{book.price ? `₹${book.price}` : 'N/A'}</span>
                                  </div>
                               </div>
 
@@ -1488,7 +1488,7 @@ export default function ResponsibleDashboard() {
                       </div>
                       <div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Price</span>
-                        <span className="text-lg font-black text-emerald-400 italic">{selectedBookDetails.price ? `$${selectedBookDetails.price}` : "N/A"}</span>
+                        <span className="text-lg font-black text-emerald-400 italic">{selectedBookDetails.price ? `₹${selectedBookDetails.price}` : "N/A"}</span>
                       </div>
                       <div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Location</span>

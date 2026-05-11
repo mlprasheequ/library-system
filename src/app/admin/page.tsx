@@ -881,7 +881,7 @@ export default function AdminDashboard() {
                                 <div>
                                    <p className="font-black text-xs text-white italic truncate max-w-[120px] md:max-w-[150px]">"{book.title}"</p>
                                    <p className="text-[6px] md:text-[7px] font-black text-gray-600 uppercase">ISBN: {book.isbn || book.book_id}</p>
-                                   <p className="text-[6px] md:text-[7px] font-black text-emerald-400 uppercase">{book.price ? `$${book.price}` : 'N/A'}</p>
+                                   <p className="text-[6px] md:text-[7px] font-black text-emerald-400 uppercase">{book.price ? `₹${book.price}` : 'N/A'}</p>
                                 </div>
                              </div>
                              <div className="flex items-center space-x-1 md:space-x-2">
@@ -2040,7 +2040,7 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Price</span>
-                        <span className="text-base md:text-lg font-black text-emerald-400 italic">{selectedBookDetails.price ? `$${selectedBookDetails.price}` : "N/A"}</span>
+                        <span className="text-base md:text-lg font-black text-emerald-400 italic">{selectedBookDetails.price ? `₹${selectedBookDetails.price}` : "N/A"}</span>
                       </div>
                       <div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest italic block mb-1">Location</span>
