@@ -375,7 +375,9 @@ export default function ResponsibleDashboard() {
       let currentCategories = [...categories];
       let categoriesChanged = false;
 
-      const processedBooks = await Promise.all(booksData.map(async (b: any) => {
+      const processedBooksMap = new Map();
+
+      for (const b of booksData) {
         const book_id = b.isbn || b.book_id || b.serial_id || `BK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         
         // Handle new categories from bulk import
@@ -415,7 +417,7 @@ export default function ResponsibleDashboard() {
           finalDescription = (finalDescription || '') + (finalDescription ? '\n\n' : '') + additionalInfo.join('\n');
         }
 
-        return {
+        const processedBook = {
           book_id,
           title: b.title || b.book_nomenclature || "Untitled Unit",
           author: b.author || b.authority || "Unknown Authority",
@@ -430,10 +432,20 @@ export default function ResponsibleDashboard() {
           description: finalDescription,
           status: 'available'
         };
-      }));
 
-      const { error } = await supabase.from('books').upsert(processedBooks, { onConflict: 'book_id' });
-      if (error) throw error;
+        // Upsert into map to deduplicate by book_id locally
+        processedBooksMap.set(book_id, processedBook);
+      }
+
+      const processedBooks = Array.from(processedBooksMap.values());
+      
+      // Batch processing to avoid "Failed to fetch" (payload size limits)
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < processedBooks.length; i += BATCH_SIZE) {
+        const batch = processedBooks.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase.from('books').upsert(batch, { onConflict: 'book_id' });
+        if (error) throw error;
+      }
 
       if (categoriesChanged) {
         setCategories(currentCategories);
